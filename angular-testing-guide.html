@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Angular Testing Guide — Vitest + TestBed vs ATL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" id="hljs-theme">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+<style>
+  :root {
+    --bg: #f8f9fb;
+    --surface: #ffffff;
+    --surface2: #f1f3f7;
+    --border: #e2e5ec;
+    --text: #1a1d27;
+    --text-muted: #6b7280;
+    --accent: #6c47ff;
+    --accent-soft: #ede9ff;
+    --accent2: #0ea5e9;
+    --accent2-soft: #e0f2fe;
+    --green: #10b981;
+    --green-soft: #d1fae5;
+    --orange: #f59e0b;
+    --orange-soft: #fef3c7;
+    --red: #ef4444;
+    --red-soft: #fee2e2;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --code-bg: #0d1117;
+    --code-text: #e6edf3;
+    --nav-width: 260px;
+    --header-h: 56px;
+  }
+  [data-theme="dark"] {
+    --bg: #0d0f16;
+    --surface: #13161f;
+    --surface2: #1c1f2e;
+    --border: #252836;
+    --text: #e8eaf0;
+    --text-muted: #8b92a5;
+    --accent: #836fff;
+    --accent-soft: #1e1a3a;
+    --accent2: #38bdf8;
+    --accent2-soft: #082032;
+    --green: #34d399;
+    --green-soft: #052e1e;
+    --orange: #fbbf24;
+    --orange-soft: #2d1f06;
+    --red: #f87171;
+    --red-soft: #2d0f0f;
+    --shadow: 0 1px 3px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,.4);
+    --code-bg: #161b22;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+    transition: background .2s, color .2s;
+  }
+
+  /* ── Header ── */
+  header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: var(--header-h);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px;
+    box-shadow: var(--shadow);
+    gap: 12px;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    font-weight: 700; font-size: 15px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    white-space: nowrap;
+  }
+  .badge {
+    font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 100px;
+    background: var(--accent-soft); color: var(--accent);
+  }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .theme-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 6px 10px;
+    cursor: pointer; color: var(--text); font-size: 16px;
+    transition: background .15s, transform .1s;
+    display: flex; align-items: center;
+  }
+  .theme-btn:hover { background: var(--accent-soft); transform: scale(1.05); }
+  .menu-btn {
+    display: none; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 6px 10px;
+    cursor: pointer; color: var(--text); font-size: 18px;
+  }
+
+  /* ── Layout ── */
+  .layout { display: flex; padding-top: var(--header-h); min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  nav {
+    width: var(--nav-width); flex-shrink: 0;
+    position: fixed; top: var(--header-h); bottom: 0;
+    overflow-y: auto; padding: 24px 16px;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    transition: transform .25s ease;
+  }
+  nav .nav-label {
+    font-size: 11px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--text-muted);
+    padding: 0 8px; margin-bottom: 8px;
+  }
+  nav ul { list-style: none; }
+  nav ul li { margin-bottom: 2px; }
+  nav ul li a {
+    display: block; padding: 7px 10px; border-radius: var(--radius-sm);
+    color: var(--text-muted); text-decoration: none; font-size: 13.5px;
+    font-weight: 500; transition: background .15s, color .15s;
+    border-left: 2px solid transparent;
+  }
+  nav ul li a:hover { color: var(--text); background: var(--surface2); }
+  nav ul li a.active {
+    color: var(--accent); background: var(--accent-soft);
+    border-left-color: var(--accent);
+  }
+  nav .sub { padding-left: 12px; }
+  nav .sub a { font-size: 12.5px; }
+
+  /* ── Main ── */
+  main {
+    margin-left: var(--nav-width);
+    flex: 1; padding: 40px 24px 80px;
+    max-width: 900px;
+  }
+
+  /* ── Sections ── */
+  section { margin-bottom: 64px; }
+  h1 {
+    font-size: 28px; font-weight: 700; line-height: 1.3;
+    margin-bottom: 8px;
+  }
+  h1 .sub-title { font-weight: 400; color: var(--text-muted); font-size: 18px; display: block; }
+  h2 {
+    font-size: 20px; font-weight: 700;
+    padding-bottom: 10px; border-bottom: 2px solid var(--border);
+    margin-bottom: 20px; margin-top: 40px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  h2 .icon { font-size: 20px; }
+  h3 { font-size: 15px; font-weight: 700; margin: 24px 0 10px; color: var(--accent); }
+  p { margin-bottom: 14px; color: var(--text); }
+
+  /* ── Hero ── */
+  .hero {
+    background: linear-gradient(135deg, var(--accent-soft) 0%, var(--accent2-soft) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin-bottom: 40px;
+  }
+  .hero p { color: var(--text-muted); margin-bottom: 0; font-size: 15px; }
+  .toc-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+  .toc-pill {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 100px; padding: 5px 14px; font-size: 13px; font-weight: 500;
+    color: var(--text); text-decoration: none;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .toc-pill:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* ── Code blocks ── */
+  .code-wrap {
+    position: relative; margin: 16px 0; border-radius: var(--radius);
+    overflow: hidden; box-shadow: var(--shadow);
+  }
+  .code-header {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #1c2030; padding: 8px 14px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .code-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 500; color: #8b92a5;
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+  .copy-btn {
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+    color: #8b92a5; border-radius: 6px; padding: 3px 10px;
+    font-size: 11px; font-weight: 500; cursor: pointer;
+    transition: background .15s, color .15s;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .copy-btn:hover { background: rgba(108,71,255,.3); color: #e6edf3; }
+  .copy-btn.copied { background: rgba(16,185,129,.25); color: #34d399; border-color: rgba(16,185,129,.3); }
+  pre { margin: 0 !important; }
+  pre code.hljs { padding: 18px 20px !important; font-size: 13px !important; font-family: 'JetBrains Mono', monospace !important; line-height: 1.65 !important; }
+
+  /* ── Inline code ── */
+  code:not(.hljs) {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px; background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 1px 6px; border-radius: 5px; color: var(--accent);
+  }
+
+  /* ── Callout ── */
+  .callout {
+    border-radius: var(--radius-sm); padding: 14px 18px;
+    border-left: 3px solid; margin: 20px 0;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .callout.tip { background: var(--accent-soft); border-color: var(--accent); }
+  .callout.info { background: var(--accent2-soft); border-color: var(--accent2); }
+  .callout.note { background: var(--green-soft); border-color: var(--green); }
+  .callout.warn { background: var(--orange-soft); border-color: var(--orange); }
+  .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .callout p { margin: 0; font-size: 14px; }
+  .callout strong { display: block; margin-bottom: 3px; }
+
+  /* ── Step list ── */
+  .steps { counter-reset: step; list-style: none; }
+  .steps li {
+    counter-increment: step; position: relative;
+    padding-left: 44px; margin-bottom: 24px;
+  }
+  .steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 0;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff; font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .steps li h3 { margin-top: 2px; }
+
+  /* ── Compare table ── */
+  .table-wrap { overflow-x: auto; margin: 20px 0; border-radius: var(--radius); box-shadow: var(--shadow); }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); }
+  thead tr { background: linear-gradient(135deg, var(--accent-soft), var(--accent2-soft)); }
+  thead th {
+    padding: 14px 16px; text-align: left; font-size: 13px; font-weight: 700;
+    color: var(--text); border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+  thead th:first-child { color: var(--text-muted); }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .12s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 11px 16px; font-size: 13.5px; vertical-align: top; }
+  tbody td:first-child { font-weight: 700; color: var(--text-muted); white-space: nowrap; font-size: 12.5px; }
+  .tag-testbed { color: var(--accent); background: var(--accent-soft); padding: 1px 7px; border-radius: 100px; font-size: 11.5px; font-weight: 600; }
+  .tag-atl { color: var(--green); background: var(--green-soft); padding: 1px 7px; border-radius: 100px; font-size: 11.5px; font-weight: 600; }
+
+  /* ── When to use cards ── */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 13px; font-weight: 700; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card ul { list-style: none; }
+  .card ul li {
+    font-size: 13.5px; padding: 5px 0; color: var(--text-muted);
+    border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 8px;
+  }
+  .card ul li:last-child { border-bottom: none; }
+  .card ul li::before { content: "✓"; color: var(--green); font-weight: 700; flex-shrink: 0; }
+  .card.accent { border-color: var(--accent); }
+  .card.green { border-color: var(--green); }
+
+  /* ── Rule of thumb ── */
+  .rule {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 24px; margin: 24px 0; position: relative;
+    box-shadow: var(--shadow);
+  }
+  .rule::before {
+    content: '"'; font-size: 80px; line-height: 1;
+    color: var(--border); position: absolute;
+    top: -10px; left: 16px; font-family: Georgia, serif;
+  }
+  .rule p { font-size: 15px; font-style: italic; color: var(--text-muted); padding-left: 20px; margin: 0; }
+
+  /* ── Divider ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    nav { transform: translateX(-100%); z-index: 90; }
+    nav.open { transform: translateX(0); }
+    main { margin-left: 0; padding: 24px 16px 60px; }
+    .menu-btn { display: flex; }
+    .cards { grid-template-columns: 1fr; }
+    h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <button class="menu-btn" onclick="toggleNav()" aria-label="Menu">☰</button>
+    <span class="logo">Angular Testing Guide</span>
+    <span class="badge">Vitest</span>
+  </div>
+  <div class="header-right">
+    <button class="theme-btn" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle light/dark">🌙</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav id="sidebar">
+    <div class="nav-label">Contents</div>
+    <ul>
+      <li><a href="#setup">⚙️ Installation & Setup</a></li>
+      <li>
+        <ul class="sub">
+          <li><a href="#deps">Dependencies</a></li>
+          <li><a href="#angular-json">angular.json</a></li>
+          <li><a href="#tsconfig">tsconfig.spec.json</a></li>
+          <li><a href="#scripts">package.json scripts</a></li>
+        </ul>
+      </li>
+      <li><a href="#testbed">🔬 TestBed + Vitest</a></li>
+      <li>
+        <ul class="sub">
+          <li><a href="#tb-structure">Basic structure</a></li>
+          <li><a href="#tb-inputs">Signal inputs</a></li>
+          <li><a href="#tb-query">Querying DOM</a></li>
+          <li><a href="#tb-events">User input</a></li>
+          <li><a href="#tb-detection">Change detection</a></li>
+          <li><a href="#tb-full">Full example</a></li>
+        </ul>
+      </li>
+      <li><a href="#atl">🎯 Angular Testing Library</a></li>
+      <li>
+        <ul class="sub">
+          <li><a href="#atl-render">Rendering</a></li>
+          <li><a href="#atl-query">Querying DOM</a></li>
+          <li><a href="#atl-user">userEvent</a></li>
+          <li><a href="#atl-full">Full example</a></li>
+        </ul>
+      </li>
+      <li><a href="#mocks">🎭 Mocks & Spies</a></li>
+      <li><a href="#compare">⚖️ Compare & Contrast</a></li>
+    </ul>
+  </nav>
+
+  <main>
+
+    <!-- Hero -->
+    <section id="top">
+      <div class="hero">
+        <h1>Angular Testing Guide
+          <span class="sub-title">Vitest + TestBed vs Angular Testing Library</span>
+        </h1>
+        <p>A practical reference for writing unit and integration tests in Angular 19+. Covers setup, patterns, mocks, and when to choose each approach.</p>
+        <div class="toc-pills">
+          <a class="toc-pill" href="#setup">⚙️ Setup</a>
+          <a class="toc-pill" href="#testbed">🔬 TestBed</a>
+          <a class="toc-pill" href="#atl">🎯 ATL</a>
+          <a class="toc-pill" href="#mocks">🎭 Mocks</a>
+          <a class="toc-pill" href="#compare">⚖️ Compare</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Setup -->
+    <section id="setup">
+      <h2><span class="icon">⚙️</span> Installation &amp; Setup</h2>
+
+      <ol class="steps">
+
+        <li id="deps">
+          <h3>Install dependencies</h3>
+          <p>Angular 21+ uses <code>@angular/build</code> which bundles Vitest internally.</p>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-bash"># Core test runner (Angular 21+ uses @angular/build which bundles vitest)
+npm install --save-dev vitest
+
+# Coverage provider
+npm install --save-dev @vitest/coverage-v8
+
+# DOM matchers (toBeInTheDocument, toBeVisible, etc.)
+npm install --save-dev @testing-library/jest-dom
+
+# Angular Testing Library (ATL only)
+npm install --save-dev @testing-library/angular @testing-library/dom
+
+# Simulates real user interactions (ATL only)
+npm install --save-dev @testing-library/user-event</code></pre>
+          </div>
+        </li>
+
+        <li id="angular-json">
+          <h3>Configure the test builder in <code>angular.json</code></h3>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-json">"test": {
+  "builder": "@angular/build:unit-test",
+  "options": {
+    "coverage": true,
+    "coverageReporters": ["html"],
+    "coverageInclude": ["src/app/components/my-component/**"],
+    "coverageThresholds": {
+      "statements": 80,
+      "branches": 80,
+      "functions": 80,
+      "lines": 80
+    }
+  }
+}</code></pre>
+          </div>
+        </li>
+
+        <li id="tsconfig">
+          <h3>Configure TypeScript in <code>tsconfig.spec.json</code></h3>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-json">{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/spec",
+    "types": [
+      "vitest/globals",
+      "@testing-library/jest-dom"
+    ]
+  },
+  "include": [
+    "src/**/*.d.ts",
+    "src/**/*.spec.ts"
+  ]
+}</code></pre>
+          </div>
+          <div class="callout info">
+            <span class="callout-icon">ℹ️</span>
+            <p><strong>Type globals explained</strong>
+              <code>vitest/globals</code> makes <code>describe</code>, <code>it</code>, <code>expect</code>, <code>vi</code> etc. available without imports.<br>
+              <code>@testing-library/jest-dom</code> adds types for DOM matchers like <code>toBeInTheDocument</code>.
+            </p>
+          </div>
+        </li>
+
+        <li id="scripts">
+          <h3>Add scripts to <code>package.json</code></h3>
+          <div class="code-wrap">
+            <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-json">"scripts": {
+  "test": "ng test",
+  "test:watch": "ng test --watch --no-coverage",
+  "test:coverage": "ng test"
+}</code></pre>
+          </div>
+        </li>
+
+      </ol>
+    </section>
+
+    <hr>
+
+    <!-- TestBed -->
+    <section id="testbed">
+      <h2><span class="icon">🔬</span> TestBed + Vitest</h2>
+      <p>TestBed is Angular's built-in testing utility. It creates a minimal Angular module for each test, giving you direct access to the component instance, its inputs, outputs, and the DOM via <code>fixture</code>.</p>
+
+      <h3 id="tb-structure">Basic structure</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-typescript">import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MyComponent } from './my.component';
+
+describe('MyComponent', () => {
+  let component: MyComponent;
+  let fixture: ComponentFixture&lt;MyComponent&gt;;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MyComponent], // standalone component
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(MyComponent);
+    component = fixture.componentInstance;
+    await fixture.whenStable();
+  });</code></pre>
+      </div>
+
+      <h3 id="tb-inputs">Setting signal inputs</h3>
+      <div class="callout warn">
+        <span class="callout-icon">⚠️</span>
+        <p><strong>Angular 19+ signal inputs</strong> cannot be set via direct property assignment. Use <code>componentRef.setInput</code> instead.</p>
+      </div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-typescript">fixture.componentRef.setInput('label', 'Bill Amount');
+fixture.detectChanges();</code></pre>
+      </div>
+
+      <h3 id="tb-query">Querying the DOM</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-typescript">// by CSS selector
+const label = fixture.nativeElement.querySelector('label');
+
+// by element type
+const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+const img   = fixture.nativeElement.querySelector('img');</code></pre>
+      </div>
+
+      <h3 id="tb-events">Simulating user input</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-typescript">const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+input.value = '25';
+input.dispatchEvent(new Event('input'));
+fixture.detectChanges();</code></pre>
+      </div>
+
+      <h3 id="tb-detection">Triggering change detection</h3>
+      <p>Call <code>fixture.detectChanges()</code> after any state change (input set, signal updated, etc.) to flush Angular's rendering cycle.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-typescript">component.writeValue(99);
+fixture.detectChanges();
+expect(input.value).toBe('99');</code></pre>
+      </div>
+
+      <h3 id="tb-full">Full example</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-typescript">import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TipInput } from './tip-input';
+
+describe('TipInput', () => {
+  let component: TipInput;
+  let fixture: ComponentFixture&lt;TipInput&gt;;
+  let inputEl: HTMLInputElement;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TipInput],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TipInput);
+    component = fixture.componentInstance;
+    await fixture.whenStable();
+    inputEl = fixture.nativeElement.querySelector('input');
+  });
+
+  function simulateInput(value: string) {
+    inputEl.value = value;
+    inputEl.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+  }
+
+  it('renders default label', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('label').textContent.trim())
+      .toBe('Tip Amount:');
+  });
+
+  it('reflects initial value', () => {
+    fixture.componentRef.setInput('value', 50);
+    fixture.detectChanges();
+    expect(inputEl.value).toBe('50');
+  });
+
+  it('strips non-numeric characters', () => {
+    simulateInput('12abc');
+    expect(inputEl.value).toBe('12');
+  });
+
+  it('emits valueChange on input', () => {
+    vi.spyOn(component.valueChange, 'emit');
+    simulateInput('25');
+    expect(component.valueChange.emit).toHaveBeenCalledWith(25);
+  });
+
+  it('calls onChange via ControlValueAccessor', () => {
+    const onChange = vi.fn();
+    component.registerOnChange(onChange);
+    simulateInput('15');
+    expect(onChange).toHaveBeenCalledWith(15);
+  });
+});</code></pre>
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- ATL -->
+    <section id="atl">
+      <h2><span class="icon">🎯</span> Angular Testing Library + Vitest</h2>
+      <p>ATL wraps TestBed with a user-centric query API. Tests interact with the DOM the way a user would — by finding elements by their visible text, role, or label — rather than by CSS selectors or component internals.</p>
+
+      <h3>Import DOM matchers at the top of every spec</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-typescript">import '@testing-library/jest-dom/vitest';</code></pre>
+      </div>
+      <div class="callout tip">
+        <span class="callout-icon">💡</span>
+        <p>This call extends vitest's <code>expect</code> with DOM matchers at runtime. The TypeScript types are already wired via <code>tsconfig.spec.json</code>.</p>
+      </div>
+
+      <h3 id="atl-render">Rendering a component</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-typescript">import { render, screen } from '@testing-library/angular';
+import { MyComponent } from './my.component';
+
+const { fixture, container } = await render(MyComponent, {
+  inputs: { label: 'Bill Amount', value: 42 },
+});</code></pre>
+      </div>
+      <p><code>render</code> returns <code>{ fixture, container, debugElement, ... }</code>. Use <code>fixture</code> when you need to access the component instance directly.</p>
+
+      <h3 id="atl-query">Querying the DOM</h3>
+      <p>ATL queries find elements the way users do — by role, label, or text — not by CSS class or position.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-typescript">// preferred: by ARIA role
+screen.getByRole('textbox')        // &lt;input&gt;
+screen.getByRole('img')            // &lt;img&gt;
+screen.getByRole('button')         // &lt;button&gt;
+
+// by visible text
+screen.getByText('Tip Amount:')
+screen.queryByText('error msg')    // returns null if not found (safe for absence checks)
+
+// by label text (accessible)
+screen.getByLabelText('Tip Amount:')</code></pre>
+      </div>
+      <div class="callout note">
+        <span class="callout-icon">✅</span>
+        <p>Use <code>getBy*</code> when the element must exist (throws if missing). Use <code>queryBy*</code> to assert absence.</p>
+      </div>
+
+      <h3 id="atl-user">Simulating user interaction with userEvent</h3>
+      <p><code>userEvent</code> simulates real browser events (keydown, keypress, input, keyup, focus, blur) in sequence — much closer to actual user behavior than <code>fireEvent</code>.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-typescript">import userEvent from '@testing-library/user-event';
+
+const input = screen.getByRole('textbox') as HTMLInputElement;
+
+// type characters one by one (fires full keyboard event chain per character)
+await userEvent.type(input, '99');
+
+// clear the field (select all + delete)
+await userEvent.clear(input);
+
+// click a button
+await userEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+// tab to next field
+await userEvent.tab();</code></pre>
+      </div>
+      <div class="callout warn">
+        <span class="callout-icon">⚠️</span>
+        <p>Always <code>await</code> userEvent calls — they return promises.</p>
+      </div>
+
+      <h3 id="atl-full">Full example</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-typescript">import '@testing-library/jest-dom/vitest';
+import { render, screen } from '@testing-library/angular';
+import userEvent from '@testing-library/user-event';
+import { TipInput } from './tip-input';
+
+describe('TipInput (ATL)', () => {
+  function getInput() {
+    return screen.getByRole('textbox') as HTMLInputElement;
+  }
+
+  async function typeInto(input: HTMLInputElement, value: string) {
+    await userEvent.clear(input);
+    await userEvent.type(input, value);
+  }
+
+  it('renders with default label', async () => {
+    await render(TipInput);
+    expect(screen.getByText('Tip Amount:')).toBeInTheDocument();
+  });
+
+  it('reflects initial value', async () => {
+    await render(TipInput, { inputs: { value: 42 } });
+    expect(getInput().value).toBe('42');
+  });
+
+  it('strips non-numeric characters', async () => {
+    await render(TipInput, { inputs: { variant: 'currency' } });
+    const input = getInput();
+    await typeInto(input, '12abc');
+    expect(input.value).toBe('12');
+  });
+
+  it('emits valueChange on input', async () => {
+    const { fixture } = await render(TipInput, { inputs: { variant: 'currency' } });
+    vi.spyOn(fixture.componentInstance.valueChange, 'emit');
+    await typeInto(getInput(), '25.50');
+    expect(fixture.componentInstance.valueChange.emit).toHaveBeenCalledWith(25.5);
+  });
+
+  it('shows error message when provided', async () => {
+    await render(TipInput, { inputs: { error: 'Must be greater than 0' } });
+    expect(screen.getByText('Must be greater than 0')).toBeInTheDocument();
+  });
+
+  it('hides error by default', async () => {
+    const { container } = await render(TipInput);
+    expect(container.querySelector('p')).toBeNull();
+  });
+});</code></pre>
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- Mocks -->
+    <section id="mocks">
+      <h2><span class="icon">🎭</span> Mocks &amp; Spies</h2>
+      <p>Both approaches use vitest's <code>vi</code> API for mocking and spying.</p>
+
+      <h3>Spy on an output's emit</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-typescript">vi.spyOn(component.valueChange, 'emit');
+// ... trigger interaction ...
+expect(component.valueChange.emit).toHaveBeenCalledWith(42);</code></pre>
+      </div>
+
+      <h3>Mock a function</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-typescript">const onChange = vi.fn();
+component.registerOnChange(onChange);
+// ... trigger input ...
+expect(onChange).toHaveBeenCalledWith(15);
+expect(onChange).toHaveBeenCalledTimes(1);</code></pre>
+      </div>
+
+      <h3>Mock a service — TestBed</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-typescript">const mockAuthService = {
+  isLoggedIn: vi.fn().mockReturnValue(true),
+  logout: vi.fn(),
+};
+
+await TestBed.configureTestingModule({
+  imports: [MyComponent],
+  providers: [
+    { provide: AuthService, useValue: mockAuthService },
+  ],
+}).compileComponents();</code></pre>
+      </div>
+
+      <h3>Mock a service — ATL</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-typescript">await render(MyComponent, {
+  providers: [
+    { provide: AuthService, useValue: mockAuthService },
+  ],
+});</code></pre>
+      </div>
+
+      <h3>Reset mocks between tests</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">typescript</span><button class="copy-btn" onclick="copyCode(this)">⎘ Copy</button></div>
+<pre><code class="language-typescript">afterEach(() => {
+  vi.restoreAllMocks(); // restores spies to original implementation
+  vi.clearAllMocks();   // clears call history only
+});</code></pre>
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- Compare -->
+    <section id="compare">
+      <h2><span class="icon">⚖️</span> Compare &amp; Contrast</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th><span class="tag-testbed">TestBed</span></th>
+              <th><span class="tag-atl">ATL</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Philosophy</td><td>Test Angular internals</td><td>Test what the user sees</td></tr>
+            <tr><td>Query style</td><td>CSS selectors on <code>nativeElement</code></td><td>ARIA roles, labels, visible text</td></tr>
+            <tr><td>Input setup</td><td><code>fixture.componentRef.setInput()</code></td><td><code>inputs: { ... }</code> in render options</td></tr>
+            <tr><td>Interaction</td><td><code>dispatchEvent(new Event(...))</code></td><td><code>userEvent.type/click/clear</code></td></tr>
+            <tr><td>DOM assertions</td><td><code>textContent</code>, <code>value</code>, <code>.classList</code></td><td><code>toBeInTheDocument</code>, <code>toBeVisible</code></td></tr>
+            <tr><td>Access to internals</td><td>Direct: <code>component.method()</code></td><td>Via <code>fixture.componentInstance</code></td></tr>
+            <tr><td>Change detection</td><td>Manual: <code>fixture.detectChanges()</code></td><td>Automatic after interactions</td></tr>
+            <tr><td>Verbosity</td><td>More setup per test</td><td>Less boilerplate</td></tr>
+            <tr><td>Refactor safety</td><td>Low — breaks if HTML structure changes</td><td>High — breaks only if behaviour changes</td></tr>
+            <tr><td>Accessibility</td><td>Not enforced</td><td>Encouraged by query API</td></tr>
+            <tr><td>Best for</td><td>Unit testing logic, CVA, services</td><td>Integration / behavioural testing</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>When to use which</h3>
+      <div class="cards">
+        <div class="card accent">
+          <div class="card-title"><span class="tag-testbed">TestBed</span> — use when…</div>
+          <ul>
+            <li>Testing a <code>ControlValueAccessor</code> or form integration directly</li>
+            <li>Testing component methods and signal state in isolation</li>
+            <li>You need precise control over change detection timing</li>
+            <li>Writing unit tests for pure component logic</li>
+          </ul>
+        </div>
+        <div class="card green">
+          <div class="card-title"><span class="tag-atl">ATL</span> — use when…</div>
+          <ul>
+            <li>Testing a feature from the user's perspective</li>
+            <li>Writing integration or acceptance-style tests</li>
+            <li>You want tests that survive HTML/CSS refactors</li>
+            <li>Enforcing accessible markup (queries fail if ARIA roles are wrong)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rule">
+        <p>Write ATL tests for the happy path and key user flows. Drop down to TestBed for edge cases that are easier to trigger directly on the component instance.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // Syntax highlight
+  document.addEventListener('DOMContentLoaded', () => {
+    hljs.highlightAll();
+    initScrollSpy();
+  });
+
+  // Theme toggle
+  function toggleTheme() {
+    const html = document.documentElement;
+    const btn = document.querySelector('.theme-btn');
+    if (html.dataset.theme === 'light') {
+      html.dataset.theme = 'dark';
+      btn.textContent = '☀️';
+    } else {
+      html.dataset.theme = 'light';
+      btn.textContent = '🌙';
+    }
+  }
+
+  // Mobile nav
+  function toggleNav() {
+    document.getElementById('sidebar').classList.toggle('open');
+  }
+
+  // Close nav on link click (mobile)
+  document.querySelectorAll('nav a').forEach(a => {
+    a.addEventListener('click', () => {
+      document.getElementById('sidebar').classList.remove('open');
+    });
+  });
+
+  // Copy button
+  function copyCode(btn) {
+    const code = btn.closest('.code-wrap').querySelector('code');
+    navigator.clipboard.writeText(code.innerText).then(() => {
+      btn.textContent = '✓ Copied';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '⎘ Copy';
+        btn.classList.remove('copied');
+      }, 1800);
+    });
+  }
+
+  // Scroll spy
+  function initScrollSpy() {
+    const navLinks = document.querySelectorAll('nav a[href^="#"]');
+    const sections = Array.from(navLinks)
+      .map(a => document.querySelector(a.getAttribute('href')))
+      .filter(Boolean);
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navLinks.forEach(a => a.classList.remove('active'));
+          const active = document.querySelector(`nav a[href="#${entry.target.id}"]`);
+          if (active) active.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+
+    sections.forEach(s => observer.observe(s));
+  }
+</script>
+</body>
+</html>
