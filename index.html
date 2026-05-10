@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knowledge Base</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f5f9;
+    --surface: #ffffff;
+    --surface2: #eef0f6;
+    --border: #e2e5ec;
+    --text: #1a1d27;
+    --text-muted: #6b7280;
+    --accent: #6c47ff;
+    --accent-soft: #ede9ff;
+    --accent2: #0ea5e9;
+    --accent2-soft: #e0f2fe;
+    --green: #10b981;
+    --green-soft: #d1fae5;
+    --orange: #f59e0b;
+    --orange-soft: #fef3c7;
+    --purple: #8b5cf6;
+    --purple-soft: #ede9fe;
+    --shadow: 0 1px 3px rgba(0,0,0,.07), 0 4px 12px rgba(0,0,0,.05);
+    --shadow-hover: 0 4px 16px rgba(108,71,255,.15), 0 1px 3px rgba(0,0,0,.08);
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  [data-theme="dark"] {
+    --bg: #0d0f16;
+    --surface: #13161f;
+    --surface2: #1c1f2e;
+    --border: #252836;
+    --text: #e8eaf0;
+    --text-muted: #8b92a5;
+    --accent: #836fff;
+    --accent-soft: #1e1a3a;
+    --accent2: #38bdf8;
+    --accent2-soft: #082032;
+    --green: #34d399;
+    --green-soft: #052e1e;
+    --orange: #fbbf24;
+    --orange-soft: #2d1f06;
+    --purple: #a78bfa;
+    --purple-soft: #1e1a3a;
+    --shadow: 0 1px 3px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.2);
+    --shadow-hover: 0 4px 20px rgba(131,111,255,.25), 0 1px 3px rgba(0,0,0,.3);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+    min-height: 100vh;
+    transition: background .2s, color .2s;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 58px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none;
+  }
+  .brand-logo {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: #fff; font-weight: 800; letter-spacing: -.5px;
+  }
+  .brand-name {
+    font-weight: 700; font-size: 15px; color: var(--text);
+  }
+  .brand-sub {
+    font-size: 13px; color: var(--text-muted); margin-left: 2px;
+  }
+  .theme-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 6px 10px;
+    cursor: pointer; color: var(--text); font-size: 16px;
+    transition: background .15s, transform .1s;
+    display: flex; align-items: center;
+  }
+  .theme-btn:hover { background: var(--accent-soft); transform: scale(1.05); }
+
+  /* ── Hero ── */
+  .hero {
+    max-width: 780px; margin: 60px auto 0; padding: 0 24px;
+    text-align: center;
+  }
+  .hero h1 {
+    font-size: 36px; font-weight: 800; line-height: 1.2;
+    letter-spacing: -.5px; margin-bottom: 12px;
+  }
+  .hero h1 span {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p { color: var(--text-muted); font-size: 16px; max-width: 480px; margin: 0 auto 32px; }
+
+  /* ── Search ── */
+  .search-wrap {
+    position: relative; max-width: 480px; margin: 0 auto;
+  }
+  .search-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--text-muted); font-size: 16px; pointer-events: none;
+  }
+  #search {
+    width: 100%; padding: 12px 16px 12px 42px;
+    border: 1.5px solid var(--border); border-radius: 100px;
+    background: var(--surface); color: var(--text);
+    font-family: inherit; font-size: 14px;
+    outline: none; transition: border-color .2s, box-shadow .2s;
+  }
+  #search::placeholder { color: var(--text-muted); }
+  #search:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(108,71,255,.12);
+  }
+  .search-clear {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: var(--surface2); border: none; border-radius: 50%;
+    width: 22px; height: 22px; cursor: pointer; color: var(--text-muted);
+    font-size: 13px; display: none; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .search-clear:hover { background: var(--border); }
+  .search-clear.visible { display: flex; }
+
+  /* ── Filter tags ── */
+  .filters {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; flex-wrap: wrap; margin-top: 16px;
+  }
+  .filter-tag {
+    padding: 4px 14px; border-radius: 100px; border: 1.5px solid var(--border);
+    background: var(--surface); color: var(--text-muted); font-size: 12.5px;
+    font-weight: 500; cursor: pointer; transition: all .15s; white-space: nowrap;
+  }
+  .filter-tag:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-tag.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ── Grid ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--text-muted);
+  }
+  .doc-count {
+    font-size: 12px; color: var(--text-muted);
+    background: var(--surface2); padding: 2px 8px; border-radius: 100px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 22px;
+    text-decoration: none; color: inherit;
+    display: flex; flex-direction: column; gap: 12px;
+    transition: box-shadow .2s, border-color .2s, transform .15s;
+    box-shadow: var(--shadow);
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--card-color, var(--accent)), var(--card-color2, var(--accent2)));
+    opacity: 0; transition: opacity .2s;
+  }
+  .card:hover {
+    box-shadow: var(--shadow-hover); border-color: var(--card-color, var(--accent));
+    transform: translateY(-2px);
+  }
+  .card:hover::before { opacity: 1; }
+  .card-icon {
+    width: 42px; height: 42px; border-radius: 10px;
+    background: var(--card-bg, var(--accent-soft));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .card-meta { display: flex; align-items: flex-start; justify-content: space-between; }
+  .card-tag {
+    font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 100px;
+    background: var(--card-bg, var(--accent-soft));
+    color: var(--card-color, var(--accent));
+    white-space: nowrap;
+  }
+  .card h3 { font-size: 15px; font-weight: 700; line-height: 1.35; }
+  .card p { font-size: 13.5px; color: var(--text-muted); line-height: 1.55; flex: 1; }
+  .card-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 10px; border-top: 1px solid var(--border);
+    margin-top: auto;
+  }
+  .card-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    font-size: 11px; padding: 2px 7px; border-radius: 5px;
+    background: var(--surface2); color: var(--text-muted); font-weight: 500;
+  }
+  .card-arrow {
+    color: var(--text-muted); font-size: 14px;
+    transition: transform .2s, color .2s;
+  }
+  .card:hover .card-arrow { transform: translateX(4px); color: var(--card-color, var(--accent)); }
+
+  /* ── Empty state ── */
+  .empty {
+    grid-column: 1 / -1;
+    text-align: center; padding: 60px 20px;
+    color: var(--text-muted);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty h3 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .empty p { font-size: 14px; }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center; padding: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted); font-size: 13px;
+  }
+
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 26px; }
+    header { padding: 0 16px; }
+    .container { padding: 28px 16px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="brand" href="#">
+    <div class="brand-logo">K</div>
+    <span class="brand-name">Knowledge Base</span>
+  </a>
+  <button class="theme-btn" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
+</header>
+
+<section class="hero">
+  <h1>Knowledge <span>Base</span></h1>
+  <p>Guides, references, and decisions — all in one place.</p>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input id="search" type="text" placeholder="Search docs…" autocomplete="off" spellcheck="false">
+    <button class="search-clear" id="clear-btn" onclick="clearSearch()" aria-label="Clear search">✕</button>
+  </div>
+  <div class="filters" id="filters">
+    <button class="filter-tag active" data-tag="all">All</button>
+    <button class="filter-tag" data-tag="testing">Testing</button>
+    <button class="filter-tag" data-tag="angular">Angular</button>
+    <button class="filter-tag" data-tag="components">Components</button>
+    <button class="filter-tag" data-tag="setup">Setup</button>
+  </div>
+</section>
+
+<div class="container">
+  <div class="section-header">
+    <span class="section-title">All docs</span>
+    <span class="doc-count" id="doc-count">1 document</span>
+  </div>
+  <div class="grid" id="grid">
+
+    <!-- ── Angular Testing Guide ── -->
+    <a class="card" href="angular-testing-guide.html"
+       data-tags="testing angular vitest testbed atl components"
+       data-title="Angular Testing Guide"
+       style="--card-color:#6c47ff;--card-color2:#0ea5e9;--card-bg:#ede9ff;">
+      <div class="card-meta">
+        <div class="card-icon">🧪</div>
+        <span class="card-tag">Testing</span>
+      </div>
+      <h3>Angular Testing Guide</h3>
+      <p>Vitest + TestBed vs Angular Testing Library. Covers setup, querying, user events, mocks, and when to use each approach.</p>
+      <div class="card-footer">
+        <div class="card-chips">
+          <span class="chip">Vitest</span>
+          <span class="chip">TestBed</span>
+          <span class="chip">ATL</span>
+          <span class="chip">Angular 19+</span>
+        </div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- Add more cards below as new docs are created.
+         Copy a card block and update: href, data-tags, data-title,
+         card-icon emoji, card-tag, h3, p, chips, and CSS color vars. -->
+
+  </div>
+</div>
+
+<footer>
+  Add new docs by dropping an HTML file in this folder and adding a card above.
+</footer>
+
+<script>
+  const grid = document.getElementById('grid');
+  const searchInput = document.getElementById('search');
+  const clearBtn = document.getElementById('clear-btn');
+  const docCount = document.getElementById('doc-count');
+  const filterBtns = document.querySelectorAll('.filter-tag');
+
+  let activeTag = 'all';
+  let searchQuery = '';
+
+  function getCards() {
+    return Array.from(grid.querySelectorAll('.card'));
+  }
+
+  function applyFilters() {
+    const cards = getCards();
+    const q = searchQuery.toLowerCase().trim();
+    let visible = 0;
+
+    cards.forEach(card => {
+      const tags = card.dataset.tags || '';
+      const title = (card.dataset.title || '').toLowerCase();
+      const body = card.querySelector('p')?.textContent.toLowerCase() || '';
+      const chips = Array.from(card.querySelectorAll('.chip')).map(c => c.textContent.toLowerCase()).join(' ');
+      const searchable = title + ' ' + tags + ' ' + body + ' ' + chips;
+
+      const matchesTag = activeTag === 'all' || tags.includes(activeTag);
+      const matchesSearch = !q || searchable.includes(q);
+
+      const show = matchesTag && matchesSearch;
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    // Empty state
+    const existing = grid.querySelector('.empty');
+    if (existing) existing.remove();
+    if (visible === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.innerHTML = `
+        <div class="empty-icon">🔍</div>
+        <h3>No docs found</h3>
+        <p>Try a different search term or filter.</p>
+      `;
+      grid.appendChild(empty);
+    }
+
+    docCount.textContent = visible === 1 ? '1 document' : `${visible} documents`;
+  }
+
+  // Search
+  searchInput.addEventListener('input', () => {
+    searchQuery = searchInput.value;
+    clearBtn.classList.toggle('visible', searchQuery.length > 0);
+    applyFilters();
+  });
+
+  function clearSearch() {
+    searchInput.value = '';
+    searchQuery = '';
+    clearBtn.classList.remove('visible');
+    searchInput.focus();
+    applyFilters();
+  }
+
+  // Filter tags
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeTag = btn.dataset.tag;
+      applyFilters();
+    });
+  });
+
+  // Theme
+  function toggleTheme() {
+    const html = document.documentElement;
+    const btn = document.querySelector('.theme-btn');
+    if (html.dataset.theme === 'light') {
+      html.dataset.theme = 'dark';
+      btn.textContent = '☀️';
+    } else {
+      html.dataset.theme = 'light';
+      btn.textContent = '🌙';
+    }
+  }
+
+  // Keyboard shortcut: / to focus search
+  document.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement !== searchInput) {
+      e.preventDefault();
+      searchInput.focus();
+    }
+    if (e.key === 'Escape') {
+      clearSearch();
+      searchInput.blur();
+    }
+  });
+
+  applyFilters();
+</script>
+</body>
+</html>
